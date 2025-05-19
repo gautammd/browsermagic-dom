@@ -1,0 +1,32 @@
+{
+  "name": "browsermagic-dom",
+  "version": "1.0.0",
+  "description": "A lightweight DOM manipulation and snapshot library for AI-powered browser automation",
+  "main": "browsermagic-dom.js",
+  "types": "browsermagic-dom.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "browser",
+    "dom",
+    "snapshot",
+    "ai",
+    "automation",
+    "browsermagic",
+    "xpath",
+    "elements"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/browsermagic-dom.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/browsermagic-dom/issues"
+  },
+  "homepage": "https://github.com/yourusername/browsermagic-dom#readme",
+  "dependencies": {},
+  "devDependencies": {}
+}
