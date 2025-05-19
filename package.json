@@ -21,12 +21,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/browsermagic-dom.git"
+    "url": "https://github.com/gautammd/browsermagic-dom"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/browsermagic-dom/issues"
+    "url": "https://github.com/gautammd/browsermagic-dom/issues"
   },
-  "homepage": "https://github.com/yourusername/browsermagic-dom#readme",
+  "homepage": "https://github.com/gautammd/browsermagic-dom#readme",
   "dependencies": {},
   "devDependencies": {}
 }
