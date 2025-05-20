@@ -19,6 +19,8 @@
  * @property {boolean} [includeShadowDOM=true] - Whether to traverse shadow DOM
  * @property {string[]} [elementFilter] - Optional list of tag names to focus on
  * @property {number} [textTruncateLength=60] - Maximum length of text content to capture
+ * @property {boolean} [extractAttributes=true] - Whether to extract key attributes from elements
+ * @property {boolean} [collectSemanticGroups=true] - Whether to collect elements in semantic groups
  */
 
 /**
@@ -32,6 +34,8 @@
  * @property {number} width - Element width
  * @property {number} height - Element height
  * @property {boolean} inViewport - Whether element is in the viewport
+ * @property {Object} [attributes] - Key element attributes like id, name, type, etc.
+ * @property {string} [role] - ARIA role of the element
  */
 
 /**
@@ -43,6 +47,7 @@
  * @property {Object} [metadata] - Page metadata (if includeMetadata is true)
  * @property {Object} [viewport] - Viewport dimensions (if includeViewportInfo is true)
  * @property {ElementSnapshot[]} keyElements - Captured DOM elements information
+ * @property {Object} [semanticGroups] - Elements grouped by semantic meaning
  */
 
 /**
@@ -174,6 +179,137 @@ function isElementVisible(element) {
 }
 
 /**
+ * Extract important attributes from an element based on its type
+ * @param {Element} element - The element to extract attributes from
+ * @returns {Object} - Object containing extracted attributes
+ */
+function extractElementAttributes(element) {
+  if (!element || !(element instanceof Element)) return {};
+  
+  const attributes = {};
+  const tagName = element.tagName.toLowerCase();
+  
+  // Extract common attributes for all elements
+  if (element.id) attributes.id = element.id;
+  if (element.className) attributes.class = element.className;
+  if (element.getAttribute('name')) attributes.name = element.getAttribute('name');
+  if (element.getAttribute('role')) attributes.role = element.getAttribute('role');
+  
+  // Extract ARIA attributes
+  for (const attr of element.attributes) {
+    if (attr.name.startsWith('aria-')) {
+      attributes[attr.name] = attr.value;
+    }
+  }
+  
+  // Extract element-specific attributes
+  switch (tagName) {
+    case 'a':
+      if (element.href) attributes.href = element.href;
+      if (element.target) attributes.target = element.target;
+      break;
+    case 'input':
+      if (element.type) attributes.type = element.type;
+      if (element.placeholder) attributes.placeholder = element.placeholder;
+      if (element.value) attributes.value = element.value;
+      if (element.checked !== undefined) attributes.checked = element.checked;
+      break;
+    case 'button':
+      if (element.type) attributes.type = element.type;
+      break;
+    case 'select':
+      if (element.multiple) attributes.multiple = element.multiple;
+      break;
+    case 'img':
+      if (element.alt) attributes.alt = element.alt;
+      if (element.src) attributes.src = element.src;
+      break;
+    case 'label':
+      if (element.htmlFor) attributes.for = element.htmlFor;
+      break;
+  }
+  
+  return attributes;
+}
+
+/**
+ * Determine the semantic role of an element
+ * @param {Element} element - The element to analyze
+ * @returns {string|null} - Semantic role or null if not determined
+ */
+function getElementRole(element) {
+  if (!element || !(element instanceof Element)) return null;
+  
+  // Check for explicit role attribute
+  const roleAttr = element.getAttribute('role');
+  if (roleAttr) return roleAttr;
+  
+  // Infer role from element type
+  const tagName = element.tagName.toLowerCase();
+  switch (tagName) {
+    case 'a': return 'link';
+    case 'button': return 'button';
+    case 'input':
+      const type = element.type?.toLowerCase();
+      switch (type) {
+        case 'checkbox': return 'checkbox';
+        case 'radio': return 'radio';
+        case 'submit': return 'button';
+        case 'button': return 'button';
+        default: return 'textbox';
+      }
+    case 'select': return 'combobox';
+    case 'textarea': return 'textbox';
+    case 'img': return 'img';
+    case 'h1':
+    case 'h2':
+    case 'h3':
+    case 'h4':
+    case 'h5':
+    case 'h6': return 'heading';
+    case 'nav': return 'navigation';
+    case 'main': return 'main';
+    case 'form': return 'form';
+    default: return null;
+  }
+}
+
+/**
+ * Identify and classify elements into semantic groups
+ * @param {ElementSnapshot[]} elements - Array of element snapshots
+ * @returns {Object} - Elements grouped by semantic role
+ */
+function groupElementsBySemantic(elements) {
+  const groups = {
+    navigation: [],  // Menu items, nav links
+    interaction: [], // Buttons, links, inputs
+    content: [],     // Text content, headings
+    media: [],       // Images, videos
+    forms: []        // Form fields and elements
+  };
+  
+  elements.forEach(el => {
+    const tag = el.tag;
+    const role = el.role;
+    
+    // Group by role or tag
+    if (role === 'navigation' || tag === 'nav' || (tag === 'ul' && el.attributes?.class?.includes('nav'))) {
+      groups.navigation.push(el);
+    } else if (tag === 'button' || tag === 'a' || role === 'button' || role === 'link') {
+      groups.interaction.push(el);
+    } else if (['input', 'select', 'textarea', 'form'].includes(tag) || role === 'form') {
+      groups.forms.push(el);
+    } else if (tag === 'img' || tag === 'video' || tag === 'audio' || role === 'img') {
+      groups.media.push(el);
+    } else if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'div'].includes(tag) && el.text && el.text.trim().length > 0) {
+      groups.content.push(el);
+    }
+  });
+  
+  return groups;
+}
+
+/**
  * Take a snapshot of key elements on the page
  * @param {SnapshotOptions} [options={}] - Options for the snapshot
  * @returns {PageSnapshot} - Snapshot object with key elements and page information
@@ -187,7 +323,9 @@ function takeSnapshot(options = {}) {
     includePosition = true,
     includeShadowDOM = true,
     elementFilter = null,
-    textTruncateLength = 60
+    textTruncateLength = 60,
+    extractAttributes = true,
+    collectSemanticGroups = true
   } = options;
   
   // Create snapshot object with basic information
@@ -290,6 +428,12 @@ function takeSnapshot(options = {}) {
             elementSnapshot.height = Math.round(rect.height);
           }
           
+          // Add element attributes if requested
+          if (extractAttributes) {
+            elementSnapshot.attributes = extractElementAttributes(el);
+            elementSnapshot.role = getElementRole(el);
+          }
+          
           // Add element to results
           results.push(elementSnapshot);
         }
@@ -313,6 +457,11 @@ function takeSnapshot(options = {}) {
   
   // Add element snapshots to the main snapshot
   snapshot.keyElements = results;
+  
+  // Group elements by semantic meaning if requested
+  if (collectSemanticGroups) {
+    snapshot.semanticGroups = groupElementsBySemantic(results);
+  }
   
   return snapshot;
 }
@@ -353,6 +502,8 @@ function snapshotToPageContext(snapshot) {
         xpath: el.xpath,
         text: el.text,
         type: el.tag,
+        role: el.role,
+        attributes: el.attributes,
         location: el.x !== undefined ? {
           x: el.x,
           y: el.y, 
@@ -362,6 +513,7 @@ function snapshotToPageContext(snapshot) {
         inViewport: el.inViewport
       };
     }),
+    semanticGroups: snapshot.semanticGroups,
     timestamp: snapshot.timestamp
   };
 }
@@ -406,6 +558,12 @@ function visualizeSnapshot(snapshot) {
     html.push('  <div class="element' + (el.inViewport ? ' in-viewport' : '') + '">');
     html.push(`    <div><span class="tag">&lt;${el.tag}&gt;</span> <span class="text">${el.text || '(no text)'}</span></div>`);
     html.push(`    <div class="xpath">${el.xpath}</div>`);
+    if (el.role) {
+      html.push(`    <div class="role">Role: ${el.role}</div>`);
+    }
+    if (el.attributes && Object.keys(el.attributes).length > 0) {
+      html.push(`    <div class="attributes">Attributes: ${JSON.stringify(el.attributes)}</div>`);
+    }
     if (el.x !== undefined) {
       html.push(`    <div class="position">Position: x=${el.x}, y=${el.y}, width=${el.width}, height=${el.height}</div>`);
     }
@@ -428,7 +586,10 @@ export {
   isElementVisible,
   getVisibleText,
   snapshotToPageContext,
-  visualizeSnapshot
+  visualizeSnapshot,
+  extractElementAttributes,
+  getElementRole,
+  groupElementsBySemantic
 };
 
 // Support both ES modules and CommonJS
@@ -441,6 +602,9 @@ if (typeof module !== 'undefined' && module.exports) {
     isElementVisible,
     getVisibleText,
     snapshotToPageContext,
-    visualizeSnapshot
+    visualizeSnapshot,
+    extractElementAttributes,
+    getElementRole,
+    groupElementsBySemantic
   };
 }
