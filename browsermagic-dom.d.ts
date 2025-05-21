@@ -1,209 +1,284 @@
-/**
- * BrowserMagic DOM Library TypeScript Definitions
- */
+declare module 'browsermagic-dom' {
+  /**
+   * Result object interface
+   */
+  interface Result<T> {
+    success: boolean;
+    data?: T;
+    error?: string;
+  }
 
-/**
- * Default configuration options for DOM snapshots
- */
-export interface SnapshotOptions {
   /**
-   * Whether to include document title (default: true)
+   * Navigate tool for browser navigation
    */
-  includeTitle?: boolean;
-  
+  export const Navigate: {
+    /**
+     * Navigate to a URL
+     * @param url URL to navigate to
+     * @param options Navigation options
+     */
+    to: (url: string, options?: object) => Promise<Result<{
+      url: string;
+      previousUrl: string;
+      timestamp: string;
+      loadSuccess?: boolean;
+    }>>;
+
+    /**
+     * Navigate browser history (back, forward, refresh)
+     * @param direction Direction: "back", "forward", or "refresh"
+     * @param options Navigation options
+     */
+    history: (direction: 'back' | 'forward' | 'refresh', options?: object) => Promise<Result<{
+      previousUrl: string;
+      previousTitle: string;
+      direction: string;
+      timestamp: string;
+    }>>;
+
+    /**
+     * Get current browser navigation state
+     */
+    getState: () => Result<{
+      url: string;
+      title: string;
+      historyLength: number;
+      canGoBack: boolean;
+      timestamp: string;
+    }>;
+  };
+
   /**
-   * Whether to include meta tags (default: true)
+   * Extract tool for DOM element extraction
    */
-  includeMetadata?: boolean;
-  
+  export const Extract: {
+    /**
+     * Extract elements and data from the DOM
+     * @param query CSS selector, XPath, or text pattern
+     * @param options Extraction options
+     */
+    elements: (query: string, options?: {
+      queryType?: 'css' | 'xpath' | 'text';
+      visible?: boolean;
+      inViewport?: boolean;
+      limit?: number;
+      extract?: {
+        text?: boolean;
+        html?: boolean;
+        attributes?: string[];
+        styles?: string[];
+        state?: boolean;
+      };
+    }) => Result<{
+      query: string;
+      queryType: string;
+      count: number;
+      totalMatches: number;
+      elements: Array<{
+        tag: string;
+        xpath: string;
+        text?: string;
+        html?: string;
+        position?: {
+          x: number;
+          y: number;
+          width: number;
+          height: number;
+          inViewport: boolean;
+        };
+        attributes?: Record<string, string>;
+        styles?: Record<string, string>;
+        state?: object;
+      }>;
+    }>;
+
+    /**
+     * Extract page metadata and context
+     */
+    pageInfo: () => Result<{
+      url: string;
+      title: string;
+      metadata: Record<string, string>;
+      elementCounts: Record<string, number>;
+      viewport: {
+        width: number;
+        height: number;
+        scrollX: number;
+        scrollY: number;
+        devicePixelRatio: number;
+      };
+      document: {
+        width: number;
+        height: number;
+      };
+      timestamp: string;
+    }>;
+  };
+
   /**
-   * Whether to include viewport dimensions (default: true)
+   * Visualize tool for page visualization
    */
-  includeViewportInfo?: boolean;
-  
+  export const Visualize: {
+    /**
+     * Take a screenshot of the page or element
+     * @param options Screenshot options
+     */
+    screenshot: (options?: {
+      element?: string;
+      fullPage?: boolean;
+    }) => Promise<Result<{
+      type: 'screenshot';
+      timestamp: string;
+      url: string;
+      title: string;
+      fullPage: boolean;
+      viewport: object;
+      element?: object;
+      imageData: string;
+    }>>;
+
+    /**
+     * Get accessibility tree information
+     * @param options Accessibility options
+     */
+    accessibilityTree: (options?: {
+      root?: string;
+      depth?: number;
+    }) => Result<{
+      type: 'accessibilityTree';
+      timestamp: string;
+      url: string;
+      title: string;
+      tree: object;
+    }>;
+
+    /**
+     * Get DOM structure visualization
+     * @param options DOM structure options
+     */
+    domStructure: (options?: {
+      root?: string;
+      depth?: number;
+    }) => Result<{
+      type: 'domStructure';
+      timestamp: string;
+      url: string;
+      title: string;
+      structure: object;
+    }>;
+
+    /**
+     * Get a detailed snapshot of the page
+     * @param options Snapshot options
+     */
+    snapshot: (options?: object) => Result<{
+      type: 'snapshot';
+      timestamp: string;
+      url: string;
+      title: string;
+      snapshot: object;
+    }>;
+  };
+
   /**
-   * Whether to capture elements outside viewport (default: true)
+   * Perform tool for user actions
    */
-  captureOutOfViewport?: boolean;
-  
-  /**
-   * Whether to include element position information (default: true)
-   */
-  includePosition?: boolean;
-  
-  /**
-   * Whether to traverse shadow DOM (default: true)
-   */
-  includeShadowDOM?: boolean;
-  
-  /**
-   * Optional list of tag names to focus on
-   */
-  elementFilter?: string[];
-  
-  /**
-   * Maximum length of text content to capture (default: 60)
-   */
-  textTruncateLength?: number;
+  export const Perform: {
+    /**
+     * Click an element
+     * @param target CSS selector or XPath of element to click
+     * @param options Click options
+     */
+    click: (target: string, options?: {
+      waitForNavigation?: boolean;
+      waitForSelector?: string;
+      rightClick?: boolean;
+      timeout?: number;
+    }) => Promise<Result<{
+      action: string;
+      element: object;
+      url: string;
+      timestamp: string;
+    }>>;
+
+    /**
+     * Type text into an element
+     * @param target CSS selector or XPath of element
+     * @param text Text to type
+     * @param options Typing options
+     */
+    type: (target: string, text: string, options?: {
+      clear?: boolean;
+      delay?: number;
+    }) => Promise<Result<{
+      action: string;
+      element: object;
+      text: string;
+      textLength: number;
+      timestamp: string;
+    }>>;
+
+    /**
+     * Select an option from a dropdown
+     * @param target CSS selector or XPath of select element
+     * @param value Option value(s) or text to select
+     * @param options Selection options
+     */
+    select: (target: string, value: string | string[], options?: {
+      byText?: boolean;
+      multiple?: boolean;
+    }) => Result<{
+      action: string;
+      element: object;
+      selections: Array<{
+        value: string;
+        text: string;
+        partialMatch?: boolean;
+      }>;
+      errors?: string[];
+      timestamp: string;
+    }>;
+
+    /**
+     * Hover over an element
+     * @param target CSS selector or XPath of element
+     * @param options Hover options
+     */
+    hover: (target: string, options?: {
+      duration?: number;
+    }) => Promise<Result<{
+      action: string;
+      element: object;
+      duration: number;
+      timestamp: string;
+    }>>;
+
+    /**
+     * Scroll page or element
+     * @param options Scroll options
+     */
+    scroll: (options?: {
+      target?: string;
+      x?: number;
+      y?: number;
+      behavior?: 'auto' | 'smooth';
+    }) => Result<{
+      action: string;
+      element?: object;
+      x?: number;
+      y?: number;
+      behavior: string;
+      timestamp: string;
+    }>;
+  };
+
+  // Original functions still available
+  export function getXPath(element: Element): string;
+  export function findElementByXPath(xpath: string): Element | null;
+  export function takeSnapshot(options?: object): object;
+  export function snapshotToPageContext(snapshot: object): object;
+  export function isElementVisible(element: Element): boolean;
+  export function getVisibleText(element: Element): string;
+  export function inViewport(element: Element): boolean;
+  export function visualizeSnapshot(snapshot: object, options?: object): string;
 }
-
-/**
- * Element Snapshot
- */
-export interface ElementSnapshot {
-  /**
-   * Element's tag name
-   */
-  tag: string;
-  
-  /**
-   * XPath to the element
-   */
-  xpath: string;
-  
-  /**
-   * Visible text content
-   */
-  text: string;
-  
-  /**
-   * X coordinate relative to viewport
-   */
-  x?: number;
-  
-  /**
-   * Y coordinate relative to viewport
-   */
-  y?: number;
-  
-  /**
-   * Element width
-   */
-  width?: number;
-  
-  /**
-   * Element height
-   */
-  height?: number;
-  
-  /**
-   * Whether element is in the viewport
-   */
-  inViewport: boolean;
-}
-
-/**
- * Viewport information
- */
-export interface ViewportInfo {
-  /**
-   * Viewport width
-   */
-  width: number;
-  
-  /**
-   * Viewport height
-   */
-  height: number;
-  
-  /**
-   * Horizontal scroll position
-   */
-  scrollX: number;
-  
-  /**
-   * Vertical scroll position
-   */
-  scrollY: number;
-}
-
-/**
- * Page Snapshot
- */
-export interface PageSnapshot {
-  /**
-   * Current page URL
-   */
-  url: string;
-  
-  /**
-   * ISO timestamp when snapshot was taken
-   */
-  timestamp: string;
-  
-  /**
-   * Page title (if includeTitle is true)
-   */
-  title?: string;
-  
-  /**
-   * Page metadata (if includeMetadata is true)
-   */
-  metadata?: Record<string, string>;
-  
-  /**
-   * Viewport dimensions (if includeViewportInfo is true)
-   */
-  viewport?: ViewportInfo;
-  
-  /**
-   * Captured DOM elements information
-   */
-  keyElements: ElementSnapshot[];
-}
-
-/**
- * Take a snapshot of key elements on the page
- * @param options - Options for the snapshot
- * @returns Snapshot object with key elements and page information
- */
-export function takeSnapshot(options?: SnapshotOptions): PageSnapshot;
-
-/**
- * Generate an XPath for a DOM element
- * @param element - The DOM element to generate XPath for
- * @returns XPath expression for the element
- */
-export function getXPath(element: Element): string;
-
-/**
- * Find an element in the DOM using its XPath
- * @param xpath - XPath to the element
- * @returns Found element or null if not found
- */
-export function findElementByXPath(xpath: string): Element | null;
-
-/**
- * Check if an element is in the viewport
- * @param rect - Element's bounding rect {x, y, width, height}
- * @returns Whether the element is in the viewport
- */
-export function inViewport(rect: { x: number, y: number, width: number, height: number }): boolean;
-
-/**
- * Check if an element is visible
- * @param element - DOM element to check
- * @returns Whether the element is visible
- */
-export function isElementVisible(element: Element): boolean;
-
-/**
- * Get visible text content of an element
- * @param node - The node to extract text from
- * @returns Visible text content
- */
-export function getVisibleText(node: Node): string;
-
-/**
- * Convert a page snapshot to a simplified format
- * @param snapshot - The page snapshot to convert
- * @returns Simplified page context object
- */
-export function snapshotToPageContext(snapshot: PageSnapshot): object;
-
-/**
- * Create a visual representation of a snapshot for debugging
- * @param snapshot - The page snapshot
- * @returns HTML string representing the snapshot
- */
-export function visualizeSnapshot(snapshot: PageSnapshot): string;

@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "A lightweight DOM manipulation and snapshot library for AI-powered browser automation",
   "main": "browsermagic-dom.js",
+  "module": "index.js",
   "types": "browsermagic-dom.d.ts",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
