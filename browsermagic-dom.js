@@ -1,10 +1,8 @@
 /**
  * BrowserMagic DOM
- * Four Essential Browser Tools for LLMs
+ * Main entry point for CommonJS environments
  * 
- * A lightweight, focused library providing essential tools for LLMs
- * to interact with browser content:
- * 
+ * Four Essential Browser Tools for LLMs:
  * - Navigate: Browser navigation and history management
  * - Extract: DOM element extraction and data retrieval
  * - Visualize: Visual and accessibility information
@@ -14,19 +12,17 @@
  * @license MIT
  */
 
-// Import the core functions for direct export
-import { getXPath, findElementByXPath, takeSnapshot } from './core.js';
-
-// Import the four essential tools from the tools directory
+// Import everything directly to ensure proper bundling
 import Navigate from './tools/navigate.js';
 import Extract from './tools/extract.js';
 import Visualize from './tools/visualize.js';
 import Perform from './tools/perform.js';
+import { getXPath, findElementByXPath, takeSnapshot } from './core.js';
 
 // Named exports for individual tools
 export { Navigate, Extract, Visualize, Perform };
 
-// Export core functions that might be needed directly
+// Export core functions
 export { getXPath, findElementByXPath, takeSnapshot };
 
 // Default export for the entire library
