@@ -17,7 +17,10 @@
 // Import the four essential tools from the tools directory
 import { Navigate, Extract, Visualize, Perform } from './tools/index.js';
 
-// Export only the four essential tools
+// Named exports for individual tools
+export { Navigate, Extract, Visualize, Perform };
+
+// Default export for the entire library
 export default {
   Navigate,
   Extract,
