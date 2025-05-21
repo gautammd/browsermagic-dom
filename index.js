@@ -1,19 +1,26 @@
 /**
  * BrowserMagic DOM
- * Main entry point that exports all components
+ * Four Essential Browser Tools for LLMs
+ * 
+ * A lightweight, focused library providing essential tools for LLMs
+ * to interact with browser content:
+ * 
+ * - Navigate: Browser navigation and history management
+ * - Extract: DOM element extraction and data retrieval
+ * - Visualize: Visual and accessibility information
+ * - Perform: User action execution
+ * 
+ * @version 1.0.0
+ * @license MIT
  */
 
-// Import core functionality
-import * as BrowserMagicDOM from './browsermagic-dom.js';
+// Import the four essential tools from the tools directory
+import { Navigate, Extract, Visualize, Perform } from './tools/index.js';
 
-// Import agent tools
-import AgentTools from './agent-tools.js';
-
-// Re-export everything
+// Export only the four essential tools
 export default {
-  // Core DOM functionality
-  ...BrowserMagicDOM,
-  
-  // Agent tools
-  Agent: AgentTools
+  Navigate,
+  Extract,
+  Visualize,
+  Perform
 };

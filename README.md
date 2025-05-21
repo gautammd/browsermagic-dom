@@ -1,169 +1,79 @@
 # BrowserMagic DOM
 
-A lightweight, performance-optimized library for capturing DOM element information in web applications. Designed specifically for AI-powered browser automation. Works in both regular browser and extension contexts.
+A lightweight, focused library providing essential tools for LLMs to interact with browser content.
 
-## Features
+## Four Essential Browser Tools for LLMs
 
-- Efficient DOM element capture with minimal performance impact
-- Capture elements both in and outside the viewport
-- Customizable filtering of elements
-- XPath generation for reliable element location
-- Shadow DOM traversal
-- Compatible with both browser and extension environments
-- No dependencies
-- Support for both ES modules and CommonJS
+This library provides four core tools designed specifically for Language Learning Models (LLMs) to interact with web browsers:
 
-## Installation
-
-```bash
-npm install browsermagic-dom
-```
+1. **Navigate**: Browser navigation and history management
+2. **Extract**: DOM element extraction and data retrieval
+3. **Visualize**: Visual and accessibility information
+4. **Perform**: User action execution
 
 ## Usage
 
-### Basic Usage
-
 ```javascript
-import { takeSnapshot } from 'browsermagic-dom';
+import BrowserMagicDOM from 'browsermagic-dom';
 
-// Take a snapshot with default options
-const snapshot = takeSnapshot();
-console.log(snapshot.keyElements.length);  // Number of elements captured
-console.log(snapshot.url);                 // Current page URL
-console.log(snapshot.title);               // Page title
-```
+const { Navigate, Extract, Visualize, Perform } = BrowserMagicDOM;
 
-### With Custom Options
-
-```javascript
-import { takeSnapshot } from 'browsermagic-dom';
-
-// Take a snapshot with custom options
-const snapshot = takeSnapshot({
-  includeTitle: true,             // Include page title
-  includeMetadata: true,          // Include meta tags
-  includeViewportInfo: true,      // Include viewport dimensions
-  captureOutOfViewport: true,     // Capture elements outside viewport
-  includePosition: true,          // Include element position
-  includeShadowDOM: true,         // Traverse Shadow DOM
-  elementFilter: ['a', 'button'], // Only capture these elements
-  textTruncateLength: 100         // Maximum text content length
-});
-```
-
-### Find Elements by XPath
-
-```javascript
-import { findElementByXPath } from 'browsermagic-dom';
-
-// Find an element using its XPath
-const element = findElementByXPath('/html/body/div[1]/a[3]');
-if (element) {
-  element.click(); // Interact with the element
+// Use the tools
+async function example() {
+  // Navigation
+  await Navigate.to('https://example.com', { waitForLoad: true });
+  
+  // Extract elements
+  const links = Extract.elements('a', { visible: true });
+  
+  // Visualize page
+  const a11yTree = Visualize.accessibilityTree({ depth: 3 });
+  
+  // Perform actions
+  await Perform.click('#submit-button', { waitForNavigation: true });
+  await Perform.type('#search-input', 'Hello, world!');
 }
 ```
 
-### Visualize Snapshot for Debugging
+## Tool Documentation
 
-```javascript
-import { takeSnapshot, visualizeSnapshot } from 'browsermagic-dom';
+### Navigate
 
-// Take a snapshot
-const snapshot = takeSnapshot();
+Handles URL navigation, browser history, and provides navigation state information.
 
-// Create an HTML visualization
-const html = visualizeSnapshot(snapshot);
+- **Navigate.to(url, options)**: Navigate to a URL
+- **Navigate.history(direction, options)**: Navigate browser history (back, forward, refresh)
+- **Navigate.getState()**: Get current browser navigation state
 
-// Open in a new window
-const win = window.open();
-win.document.write(html);
-win.document.close();
-```
+### Extract
 
-## API Reference
+DOM element extraction and data retrieval based on queries.
 
-### `takeSnapshot(options)`
+- **Extract.elements(query, options)**: Extract elements and data from the DOM
+- **Extract.pageInfo()**: Extract page metadata and context
 
-Takes a snapshot of the current DOM state.
+### Visualize
 
-#### Options:
+Visual and accessibility information tools.
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `includeTitle` | boolean | `true` | Whether to include document title |
-| `includeMetadata` | boolean | `true` | Whether to include meta tags |
-| `includeViewportInfo` | boolean | `true` | Whether to include viewport info |
-| `captureOutOfViewport` | boolean | `true` | Whether to capture elements outside viewport |
-| `includePosition` | boolean | `true` | Whether to include element position |
-| `includeShadowDOM` | boolean | `true` | Whether to traverse Shadow DOM |
-| `elementFilter` | string[] | `null` | List of tag names to capture (null = all relevant) |
-| `textTruncateLength` | number | `60` | Maximum text content length |
+- **Visualize.screenshot(options)**: Take a screenshot of the page or element
+- **Visualize.accessibilityTree(options)**: Get accessibility tree information
+- **Visualize.domStructure(options)**: Get DOM structure visualization
+- **Visualize.snapshot(options)**: Get a detailed snapshot of the page
 
-#### Returns:
+### Perform
 
-A `PageSnapshot` object containing:
-- `url`: Current page URL
-- `timestamp`: When the snapshot was taken
-- `title`: Page title (if includeTitle is true)
-- `metadata`: Meta tags (if includeMetadata is true)
-- `viewport`: Viewport info (if includeViewportInfo is true)
-- `keyElements`: Array of captured elements
+User action execution tool.
 
-### `getXPath(element)`
+- **Perform.click(target, options)**: Click an element
+- **Perform.type(target, text, options)**: Type text into an element
+- **Perform.select(target, value, options)**: Select an option from a dropdown
+- **Perform.hover(target, options)**: Hover over an element
+- **Perform.scroll(options)**: Scroll page or element
 
-Generates an XPath expression for a DOM element.
+## Implementation Notes
 
-### `findElementByXPath(xpath)`
-
-Finds an element using an XPath expression.
-
-### `inViewport(rect)`
-
-Checks if an element is in the viewport.
-
-### `isElementVisible(element)`
-
-Checks if an element is visible (not hidden by CSS).
-
-### `getVisibleText(node)`
-
-Gets the visible text content of a node.
-
-### `snapshotToPageContext(snapshot)`
-
-Converts a snapshot to a simplified page context format.
-
-### `visualizeSnapshot(snapshot)`
-
-Creates an HTML visualization of a snapshot for debugging.
-
-## Browser Compatibility
-
-BrowserMagic DOM is compatible with all modern browsers:
-- Chrome
-- Firefox
-- Safari
-- Edge
-
-## Integration with BrowserMagic Extension
-
-This library is designed to work seamlessly with the BrowserMagic browser extension. To use it in your extension:
-
-```javascript
-// In content.js
-import { takeSnapshot } from 'browsermagic-dom';
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'getPageSnapshot') {
-    const snapshot = takeSnapshot({
-      captureOutOfViewport: message.includeOffscreen || true
-    });
-    sendResponse({ success: true, snapshot });
-  }
-  return true; // Indicate async response
-});
-```
-
-## License
-
-MIT
+- Production-grade, focused implementation
+- Single responsibility design principles
+- Optimized for browser environments
+- Detailed error handling and reporting
